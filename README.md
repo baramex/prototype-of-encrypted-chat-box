@@ -14,7 +14,7 @@ It's a prototype of encrypted chat box, it's just a beta prototype!!
 ## Download
 [![](https://img.shields.io/github/v/release/baramex/prototype-of-encrypted-chat-box?style=for-the-badge&label=last%20release)](https://github.com/baramex/prototype-of-encrypted-chat-box/releases/latest/)<br/>
 
-# Install
+<h1 id="install">Install</h1>
 - Download hard ctf.zip or easy ctf.zip and unzip it
 - Open terminal
 ```console
