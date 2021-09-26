@@ -16,7 +16,7 @@ It's a prototype of encrypted chat box, it's just a beta prototype!!
 
 <h1 id="install">Install</h1>
 
-- Download hard ctf.zip or easy ctf.zip and unzip it
+- Download archive and extract it
 - Open terminal
 ```console
 npm i
