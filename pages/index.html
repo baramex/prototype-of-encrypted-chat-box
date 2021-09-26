@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypted chat box</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.socket.io/4.2.0/socket.io.min.js" integrity="sha384-PiBR5S00EtOj2Lto9Uu81cmoyZqR57XcOna1oAuVuIEjzj0wpqDVfD0JA9eXlRsj" crossorigin="anonymous"></script>
+    <script>
+        const socket = io();
+    </script>
+
+    <style>
+        #chat {
+            width: calc(100% - 40px);
+            border: 2px solid #070707;
+            max-height: 80vh;
+            height: 80vh;
+            overflow-y: auto;
+            color: #ececec;
+            padding: 20px;
+        }
+        
+        input[type=text] {
+            width: 80%;
+            outline: none;
+            font-size: 20px;
+            outline: none;
+            margin-top: 10px;
+            box-sizing: border-box;
+            padding: 10px;
+            display: inline;
+            border: 1px solid black;
+            border-radius: 5px;
+        }
+        
+        input[type=button] {
+            width: calc(20% - 20px);
+            float: right;
+            outline: none;
+            font-size: 20px;
+            outline: none;
+            margin-top: 10px;
+            padding: 10px;
+            display: inline;
+            background-color: green;
+            border: 1px solid transparent;
+            cursor: pointer;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body style="background-color: #353535;font-family: sans-serif;">
+    <div id="chat"></div>
+    <input type="text" id="message" placeholder="Message..." />
+    <input type="button" id="sendMessage" value="Send">
+
+    <script>
+        document.getElementById("sendMessage").addEventListener("click", () => {
+            sendMessage(document.getElementById("message").value);
+        });
+
+        document.addEventListener("keypress", (ev) => {
+            if (ev.key == "Enter") sendMessage(document.getElementById("message").value);
+        });
+
+        socket.on("join", (joiner) => {
+            var p = document.createElement("div");
+            p.innerHTML = "<p style='overflow-wrap: break-word;font-weight: bold;font-size: 18px;'>" + (socket.id == joiner ? "You have joined the session" : joiner + " joined the session");
+            document.getElementById("chat").appendChild(p);
+            document.getElementById("chat").scrollTo({
+                top: document.getElementById("chat").scrollHeight
+            });
+        });
+
+        socket.on("key", key => {
+            document.cookie = "key=" + key;
+        });
+
+        socket.on("message", ({
+            encrypted,
+            sender,
+            time
+        }) => {
+            console.log("[client/INFO] Received message !");
+            var message = CryptoJS.AES.decrypt(encrypted, getCookie("key").split("").join(sender.id + time)).toString(CryptoJS.enc.Utf8);
+            var p = document.createElement("div");
+            p.innerHTML = "<p style='overflow-wrap: break-word;'>[" + date(time) + "] " + (socket.id == sender.id ? "You" : sender.id) + ": " + ((message && message.replace(/ /g, "").length > 0) ? message : "Error decrypt: " + encrypted) + "</p>";
+            document.getElementById("chat").appendChild(p);
+            document.getElementById("chat").scrollTo({
+                top: document.getElementById("chat").scrollHeight
+            });
+        });
+
+        function sendMessage(message) {
+            console.log("[client/INFO] Send message !");
+            var t = new Date().getTime();
+            var encrypted = CryptoJS.AES.encrypt(message, getCookie("key").split("").join(socket.id + t)).toString();
+            socket.emit("message", {
+                message: encrypted,
+                time: t
+            });
+            document.getElementById("message").value = "";
+        }
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function date(time) {
+            var d = new Date(time);
+
+            hours = format_two_digits(d.getHours());
+            minutes = format_two_digits(d.getMinutes());
+            seconds = format_two_digits(d.getSeconds());
+            return hours + ":" + minutes + ":" + seconds;
+        }
+
+        function format_two_digits(n) {
+            return n.toString().length < 2 ? '0' + n : n;
+        }
+    </script>
+</body>
+
+</html>
